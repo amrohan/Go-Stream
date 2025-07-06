@@ -1,0 +1,38 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Vendor dependencies (if you use vendoring)
+vendor/
+
+# IDE/editor specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Ignore videos in the project root (adjust extensions as needed)
+/*.mp4
+/*.mov
+/*.avi
+/*.mkv
+/*.webm
+/*.flv
+/*.wmv
+/*.m4v

@@ -1,0 +1,117 @@
+{{define "player.html"}}
+<nav id="breadcrumb">
+  <a
+    href="/folder/{{.CurrentPath}}"
+    hx-get="/folder/{{.CurrentPath}}"
+    hx-target="#main-content"
+    hx-push-url="true"
+  >
+    <button class="responsive border round">
+      <i>arrow_back</i>
+      <span>Back to Browser</span>
+    </button>
+  </a>
+</nav>
+
+<!-- Hidden input to provide the current path to the global upload modal JS -->
+<input type="hidden" id="current-path-for-upload" value="{{.CurrentPath}}" />
+
+<div class="grid">
+  <div class="s12 l8">
+    <article class="card no-padding" id="player-container">
+      <video id="player" playsinline controls autoplay>
+        <source src="/stream/{{.PlayingItem.Path}}" type="video/mp4" />
+      </video>
+
+      <div id="now-playing-info">
+        <h5 id="now-playing-title">{{.PlayingItem.Name}}</h5>
+        <p id="now-playing-path" class="small-text tertiary-text">
+          {{.PlayingItem.Path}}
+        </p>
+      </div>
+    </article>
+  </div>
+  <div class="s12 l4">
+    <div id="episode-list-container">
+      <h4>Up Next</h4>
+      <ul class="list round" id="episode-list">
+        {{range .Playlist}}
+        <li
+          data-path="{{.Path}}"
+          data-name="{{.Name}}"
+          onclick="playVideoFromPlaylist(this)"
+          class="{{if eq .Path $.PlayingItem.Path}}active{{end}}"
+        >
+          <i>movie</i>
+          <div class="max">
+            <h6 class="small">{{.Name}}</h6>
+            <div>{{if gt .SizeMB 0}}{{.SizeMB}} MB{{else}}< 1 MB{{end}}</div>
+          </div>
+        </li>
+        {{end}}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  function playVideoFromPlaylist(element) {
+    const path = element.dataset.path;
+    const name = element.dataset.name;
+
+    if (window.plyrInstance) {
+      window.plyrInstance.source = {
+        type: "video",
+        title: name,
+        sources: [
+          {
+            src: `/stream/${encodeURIComponent(path)}`,
+            type: "video/mp4",
+          },
+        ],
+      };
+      window.plyrInstance.play();
+    }
+
+    document.getElementById("now-playing-title").textContent = name;
+    document.getElementById("now-playing-path").textContent = path;
+    document.title = `Playing: ${name}`;
+
+    document.querySelectorAll("#episode-list li").forEach((li) => {
+      li.classList.remove("active");
+    });
+    element.classList.add("active");
+
+    const newUrl = `/player/${path}`;
+    history.pushState({}, "", newUrl);
+  }
+
+  document.body.addEventListener(
+    "htmx:beforeSwap",
+    (evt) => {
+      if (evt.detail.target.id === "main-content" && window.plyrInstance) {
+        window.plyrInstance.destroy();
+        window.plyrInstance = null;
+      }
+    },
+    { once: true },
+  );
+  document.body.addEventListener(
+    "htmx:afterSwap",
+    (evt) => {
+      const playerElement = evt.detail.target.querySelector("#player");
+
+      if (playerElement) {
+        let player = new Plyr(playerElement, {});
+        window.plyrInstance = player;
+      }
+    },
+    { once: true },
+  );
+
+  if (document.getElementById("player")) {
+    let player = new Plyr("#player", {});
+    window.plyrInstance = player;
+  }
+</script>
+{{end}}

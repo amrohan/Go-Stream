@@ -1,0 +1,223 @@
+<!-- web/templates/layout.html -->
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoStream</title>
+
+    <!-- CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/beercss@3.11.30/dist/cdn/beer.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+
+    <!-- JS -->
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/beercss@3.11.30/dist/cdn/beer.min.js"
+    ></script>
+    <script
+      type="module"
+      src="https://cdn.jsdelivr.net/npm/material-dynamic-colors@1.1.2/dist/cdn/material-dynamic-colors.min.js"
+    ></script>
+    <script
+      src="https://unpkg.com/htmx.org@1.9.10"
+      integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+
+    <style>
+      :root {
+        --card-gap: 1rem;
+      }
+      #main-content {
+        padding-top: 1rem;
+      }
+
+      /* Browser View Styles */
+      #file-grid {
+        display: grid;
+        gap: var(--card-gap);
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+      .video-card {
+        width: 100%;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease-out,
+          box-shadow 0.2s ease-out;
+        overflow: hidden;
+      }
+      .video-card:hover {
+        transform: scale(1.05);
+        box-shadow: var(--shadow-3);
+        z-index: 10;
+      }
+      .video-card .thumbnail-container {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background-color: var(--surface-container-highest);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .video-card .folder-icon {
+        font-size: 4rem;
+        opacity: 0.5;
+      }
+      .video-card .card-content {
+        padding: 12px;
+      }
+      .video-card .title {
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .video-card .subtitle {
+        font-size: 0.8rem;
+        color: var(--on-surface-variant);
+      }
+      a.card-link {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      /* Player View Styles */
+      #player-container {
+        background-color: var(--surface); /* Kept this for consistency */
+      }
+      #now-playing-info {
+        padding: 1rem;
+        border-top: 1px solid var(--outline);
+      }
+      #episode-list-container {
+        padding: 1rem;
+      }
+      #episode-list {
+        max-height: 40vh;
+        overflow-y: auto;
+      }
+      #episode-list li {
+        cursor: pointer;
+        padding: 12px 16px;
+      }
+      #episode-list li.active {
+        background-color: var(--primary-container);
+      }
+      #episode-list li:not(.active):hover {
+        background-color: var(--surface-container-highest);
+      }
+
+      /* Common Styles */
+      #breadcrumb {
+        margin-bottom: 1rem;
+        color: var(--on-surface-variant);
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      #breadcrumb a {
+        color: var(--primary);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      #breadcrumb a:hover {
+        text-decoration: underline;
+      }
+      #breadcrumb span.separator {
+        color: var(--on-surface-variant);
+      }
+    </style>
+  </head>
+  <body hx-boost="true">
+    <header class="responsive fixed">
+      <nav>
+        <h6 class="max">GoStream</h6>
+        <button class="primary" onclick="openUploadModal()">
+          <i>upload</i>
+          <span>Upload</span>
+        </button>
+      </nav>
+    </header>
+
+    <main class="responsive" id="main-content">
+      {{ if .PlayingItem.Path }} {{ template "player.html" . }} {{ else }} {{
+      template "browser.html" . }} {{ end }}
+    </main>
+
+    <!-- Upload Modal Dialog  -->
+    <dialog class="modal" id="upload-modal">
+      <form
+        id="upload-form"
+        hx-encoding="multipart/form-data"
+        hx-post="/upload"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+      >
+        <h5 class="bold">Upload File</h5>
+        <div class="field label border" id="upload-area">
+          <input type="file" id="file-input" name="file" required />
+          <label for="file-input">Click to select or drag file</label>
+        </div>
+        <input
+          type="hidden"
+          name="path"
+          id="upload-path-input"
+          value="{{ .CurrentPath }}"
+        />
+
+        <div class="progress" id="upload-progress" style="display: none"></div>
+
+        <nav class="right-align">
+          <button class="link" onclick="closeUploadModal(event)">Cancel</button>
+          <button type="submit" class="button primary">Upload</button>
+        </nav>
+      </form>
+    </dialog>
+
+    <script>
+      // Global modal and upload script (Unchanged)
+      const uploadModal = document.getElementById("upload-modal");
+      const uploadForm = document.getElementById("upload-form");
+      const uploadProgress = document.getElementById("upload-progress");
+
+      function openUploadModal() {
+        const currentPathInput = document.getElementById(
+          "current-path-for-upload",
+        );
+        if (currentPathInput) {
+          document.getElementById("upload-path-input").value =
+            currentPathInput.value;
+        }
+        ui("#upload-modal", true);
+      }
+
+      function closeUploadModal(event) {
+        if (event) event.preventDefault();
+        ui("#upload-modal", false);
+        uploadForm.reset();
+        uploadProgress.style.display = "none";
+        uploadProgress.value = 0;
+      }
+
+      document.body.addEventListener("htmx:xhr:progress", function (evt) {
+        uploadProgress.style.display = "block";
+        let percent = (evt.detail.loaded / evt.detail.total) * 100;
+        uploadProgress.setAttribute("value", Math.round(percent));
+      });
+
+      document.body.addEventListener("htmx:afterOnLoad", function (evt) {
+        if (evt.detail.xhr.responseURL.includes("/upload")) {
+          closeUploadModal();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,69 @@
+{{define "browser.html"}}
+<nav id="breadcrumb">
+  {{range $i, $crumb := .Breadcrumbs}} {{if $i}}
+  <span class="separator">/</span> {{end}}
+  <a
+    href="/folder/{{$crumb.Path}}"
+    hx-get="/folder/{{$crumb.Path}}"
+    hx-target="#main-content"
+    hx-push-url="true"
+  >
+    {{if eq $crumb.Name "home"}}<i>home</i>{{else}}{{$crumb.Name}}{{end}}
+  </a>
+  {{end}}
+</nav>
+
+<!-- Hidden input to provide the current path to the global upload modal JS -->
+<input type="hidden" id="current-path-for-upload" value="{{.CurrentPath}}" />
+
+<div id="file-grid">
+  {{/* "Up" directory link */}} {{if not (isRoot .CurrentPath)}}
+  <a
+    href="/folder/{{.ParentPath}}"
+    class="card-link"
+    hx-get="/folder/{{.ParentPath}}"
+    hx-target="#main-content"
+    hx-push-url="true"
+  >
+    <button class="responsive border round">
+      <i>arrow_back</i>
+      <span>Go Back {{.ParentPath}}</span>
+    </button>
+  </a>
+  {{end}} {{range .Entries}} {{if .IsDir}}
+  <a
+    href="/folder/{{.Path}}"
+    class="card-link"
+    hx-get="/folder/{{.Path}}"
+    hx-target="#main-content"
+    hx-push-url="true"
+  >
+    <article class="video-card round">
+      <div class="thumbnail-container"><i class="folder-icon">folder</i></div>
+      <div class="card-content">
+        <div class="title" title="{{.Name}}">{{.Name}}</div>
+        <div class="subtitle">Directory</div>
+      </div>
+    </article>
+  </a>
+  {{else}}
+  <a
+    href="/player/{{.Path}}"
+    class="card-link"
+    hx-get="/player/{{.Path}}"
+    hx-target="#main-content"
+    hx-push-url="true"
+  >
+    <article class="video-card round">
+      <div class="thumbnail-container"><i class="icon">movie</i></div>
+      <div class="card-content">
+        <div class="title" title="{{.Name}}">{{.Name}}</div>
+        <div class="subtitle">
+          {{if gt .SizeMB 0}}{{.SizeMB}} MB{{else}}< 1 MB{{end}}
+        </div>
+      </div>
+    </article>
+  </a>
+  {{end}} {{end}}
+</div>
+{{end}}
