@@ -24,7 +24,7 @@
       </video>
 
       <div id="now-playing-info">
-        <h5 id="now-playing-title">{{.PlayingItem.Name}}</h5>
+        <h5 class="small" id="now-playing-title">{{.PlayingItem.Name}}</h5>
         <p id="now-playing-path" class="small-text tertiary-text">
           {{.PlayingItem.Path}}
         </p>
@@ -33,8 +33,8 @@
   </div>
   <div class="s12 l4">
     <div id="episode-list-container">
-      <h4>Up Next</h4>
-      <ul class="list round" id="episode-list">
+      <h4 class="small">Up Next</h4>
+      <ul class="list rounded mt" id="episode-list">
         {{range .Playlist}}
         <li
           data-path="{{.Path}}"
